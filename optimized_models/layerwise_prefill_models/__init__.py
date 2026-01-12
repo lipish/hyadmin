@@ -1,0 +1,2 @@
+from .layerwise_prefill_modeling_deepseek_v3 import LPDeepseekV3ForCausalLM
+from .layerwise_prefill_modeling_qwen3_moe import LPQwen3MoeForCausalLM

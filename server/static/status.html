@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heyi Engine Status</title>
+    <!-- Bootstrap CSS for styling -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .status-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .language-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-card.success {
+            border-left-color: var(--success-color);
+        }
+
+        .stat-card.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .stat-card.danger {
+            border-left-color: var(--danger-color);
+        }
+
+        .stat-card.info {
+            border-left-color: var(--info-color);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .request-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .request-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .refresh-btn {
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .error {
+            color: var(--danger-color);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-operational {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-degraded {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-down {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-lprefilling {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-finished {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-container">
+        <div class="language-switcher">
+            <button id="lang-en" class="btn btn-sm btn-outline-primary me-2">EN</button>
+            <button id="lang-zh" class="btn btn-sm btn-outline-secondary">中文</button>
+        </div>
+
+        <div class="header">
+            <h1 id="title">Heyi Engine Status</h1>
+            <p id="subtitle">Real-time system performance and health monitoring</p>
+            <div id="serial-number-display" class="mt-2" style="display: none;">
+                <small class="text-muted" id="serial-number-label">Serial Number:</small>
+                <code id="heyi-sn-value"></code>
+            </div>
+        </div>
+
+        <!-- License Status Display -->
+        <div id="license-status-container" class="mb-4" style="display: none;">
+            <div class="alert alert-warning text-center">
+                <h4 id="license-status-title">License Status</h4>
+                <p id="license-status-message">Please check your license configuration</p>
+                <div class="mt-2">
+                    <span class="badge bg-warning text-dark" id="license-status-badge">UNLICENSED</span>
+                </div>
+                <div id="license-instruction" class="mt-3">
+                    <div id="licensing-form-container" style="display: none;">
+                        <form id="licensing-form" class="mb-3">
+                            <div class="form-group">
+                                <label for="heyi-sn-input" id="license-input-label">Enter Serial Number:</label>
+                                <input type="text" id="heyi-sn-input" class="form-control mt-2"
+                                       placeholder="16-character serial number" maxlength="16"
+                                       pattern="[A-Za-z0-9]{16}" required>
+                                <div class="invalid-feedback" id="sn-validation-error">
+                                    Please enter a valid 16-character alphanumeric serial number
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary mt-2" id="license-submit-btn">
+                                <span id="license-submit-text">Activate License</span>
+                                <span id="license-loading" class="spinner-border spinner-border-sm" style="display: none;"></span>
+                            </button>
+                        </form>
+                        <div id="licensing-result" class="alert" style="display: none;"></div>
+                    </div>
+                    
+                    <div id="general-license-instruction">
+                        <p>
+                            <!-- Placeholder for license management instructions -->
+                            Please contact your system administrator to configure the license.
+                        </p>
+                    </div>
+                    
+                    <div id="license-error-container" style="display: none;">
+                        <div class="alert alert-danger mt-2">
+                            <strong id="license-error-label">Error Details:</strong>
+                            <span id="license-error-message"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Engine Status Display -->
+        <div id="engine-status-container" class="mb-4" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 id="engine-status-title">Engine Status</h3>
+                <span class="badge" id="engine-status-badge">UNKNOWN</span>
+            </div>
+        </div>
+
+        <!-- Main Status Content (only shown when licensed) -->
+        <div id="main-status-container" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="stat-card info">
+                        <div class="stat-value" id="pending-requests">0</div>
+                        <div class="stat-label" id="label-pending">Pending Requests</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stat-card warning">
+                        <div class="stat-value" id="prefilling-requests">0</div>
+                        <div class="stat-label" id="label-prefilling">Prefilling Requests</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stat-card danger">
+                        <div class="stat-value" id="decoding-requests">0</div>
+                        <div class="stat-label" id="label-decoding">Decoding Requests</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-value" id="throughput">0</div>
+                        <div class="stat-label" id="label-throughput">Throughput (tokens/s)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 id="requests-title">Current Requests</h3>
+                <button id="refresh-btn" class="btn btn-primary refresh-btn">
+                    <i class="fas fa-sync-alt"></i>
+                    <span id="refresh-text">Refresh</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p id="loading-text">Loading status data...</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            <i class="fas fa-exclamation-triangle fa-2x"></i>
+            <p id="error-text">Failed to load status data</p>
+        </div>
+
+        <div id="requests-container" style="display: none;">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover request-table">
+                    <thead>
+                        <tr>
+                            <th id="th-state">State</th>
+                            <th id="th-ttft">TTFT (ms)</th>
+                            <th id="th-avg-tbt">Avg TBT (ms)</th>
+                            <th id="th-p95-tbt">P95 TBT (ms)</th>
+                            <th id="th-throughput">Throughput</th>
+                            <th id="th-prefill">Prefill Tokens</th>
+                            <th id="th-cache-hit">Cache Hit Tokens</th>
+                            <th id="th-decode">Decode Tokens</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requests-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <h4 id="config-title">Configuration</h4>
+            <pre id="config-data" class="bg-light p-3 rounded"></pre>
+        </div>
+    </div>
+
+    <!-- jQuery for AJAX -->
+    <script src="js/jquery.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Internationalization data
+        const i18n = {
+            en: {
+                title: "Heyi Engine Status",
+                subtitle: "Real-time system performance and health monitoring",
+                serialNumberLabel: "Serial Number:",
+                licenseStatusTitle: "License Status",
+                licenseStatusMessage: "Please check your license configuration",
+                licenseInvalid: "License Invalid",
+                licenseSnInvalid: "Serial Number Invalid",
+                licenseCollectingFailed: "Hardware Info Collection Failed",
+                licenseLicensing: "Licensing in Progress",
+                licenseLicensingFailed: "Licensing Failed",
+                licenseLicensed: "Licensed",
+                licenseErrorLabel: "Error Details:",
+                licenseInputLabel: "Enter Serial Number:",
+                licenseSubmitText: "Activate License",
+                licenseActivating: "Activating...",
+                licenseSuccess: "License request sent!",
+                licenseError: "License activation failed",
+                engineStatusTitle: "Engine Status",
+                engineInit: "Initializing",
+                engineBooting: "Booting",
+                engineRunning: "Running",
+                engineLprefilling: "Long Prefilling",
+                engineError: "Error",
+                labelPending: "Pending Requests",
+                labelPrefilling: "Prefilling Requests",
+                labelDecoding: "Decoding Requests",
+                labelThroughput: "Throughput (tokens/s)",
+                requestsTitle: "Current Requests",
+                refresh: "Refresh",
+                loading: "Loading status data...",
+                error: "Failed to load status data",
+                thState: "State",
+                thTtft: "TTFT (ms)",
+                thAvgTbt: "Avg TBT (ms)",
+                thP95Tbt: "P95 TBT (ms)",
+                thThroughput: "Throughput",
+                thPrefill: "Prefill Tokens",
+                thCacheHit: "Cache Hit Tokens",
+                thDecode: "Decode Tokens",
+                configTitle: "Configuration",
+                statePending: "Pending",
+                statePrefilling: "Prefilling",
+                stateLprefilling: "Long Prefilling",
+                stateDecoding: "Decoding",
+                stateFinished: "Finished",
+                stateCancelled: "Cancelled"
+            },
+            zh: {
+                title: "Heyi 引擎状态",
+                subtitle: "实时系统性能和健康监控",
+                serialNumberLabel: "序列号:",
+                licenseStatusTitle: "许可证状态",
+                licenseStatusMessage: "请检查您的许可证配置",
+                licenseInvalid: "许可证无效",
+                licenseSnInvalid: "序列号无效",
+                licenseCollectingFailed: "硬件信息收集失败",
+                licenseLicensing: "许可证授权中",
+                licenseLicensingFailed: "许可证授权失败",
+                licenseLicensed: "已授权",
+                licenseErrorLabel: "错误详情:",
+                licenseInputLabel: "输入序列号:",
+                licenseSubmitText: "激活许可证",
+                licenseActivating: "正在激活...",
+                licenseSuccess: "已发送许可证请求!",
+                licenseError: "许可证激活失败",
+                engineStatusTitle: "引擎状态",
+                engineInit: "初始化中",
+                engineBooting: "启动中",
+                engineRunning: "运行中",
+                engineLprefilling: "长预填充中",
+                engineError: "错误",
+                labelPending: "等待请求",
+                labelPrefilling: "预填充请求",
+                labelDecoding: "解码请求",
+                labelThroughput: "吞吐量 (tokens/s)",
+                requestsTitle: "当前请求",
+                refresh: "刷新",
+                loading: "正在加载状态数据...",
+                error: "加载状态数据失败",
+                thState: "状态",
+                thTtft: "首字延迟 (ms)",
+                thAvgTbt: "平均吐字延迟 (ms)",
+                thP95Tbt: "P95 吐字延迟 (ms)",
+                thThroughput: "吞吐量",
+                thPrefill: "Prefill Tokens",
+                thCacheHit: "Cache Hit Tokens",
+                thDecode: "Decode Tokens",
+                configTitle: "配置信息",
+                statePending: "等待中",
+                statePrefilling: "预填充中",
+                stateLprefilling: "长预填充中",
+                stateDecoding: "解码中",
+                stateFinished: "已完成",
+                stateCancelled: "已取消"
+            }
+        };
+
+        let currentLang = 'zh';
+        let refreshInterval = null;
+        
+        // Function to update UI text based on current language
+        function updateLanguage() {
+            const texts = i18n[currentLang];
+            document.getElementById('title').textContent = texts.title;
+            document.getElementById('subtitle').textContent = texts.subtitle;
+            document.getElementById('serial-number-label').textContent = texts.serialNumberLabel;
+            document.getElementById('license-status-title').textContent = texts.licenseStatusTitle;
+            document.getElementById('license-status-message').textContent = texts.licenseStatusMessage;
+            document.getElementById('engine-status-title').textContent = texts.engineStatusTitle;
+            document.getElementById('license-error-label').textContent = texts.licenseErrorLabel;
+            document.getElementById('license-input-label').textContent = texts.licenseInputLabel;
+            document.getElementById('license-submit-text').textContent = texts.licenseSubmitText;
+            document.getElementById('label-pending').textContent = texts.labelPending;
+            document.getElementById('label-prefilling').textContent = texts.labelPrefilling;
+            document.getElementById('label-decoding').textContent = texts.labelDecoding;
+            document.getElementById('label-throughput').textContent = texts.labelThroughput;
+            document.getElementById('requests-title').textContent = texts.requestsTitle;
+            document.getElementById('refresh-text').textContent = texts.refresh;
+            document.getElementById('loading-text').textContent = texts.loading;
+            document.getElementById('error-text').textContent = texts.error;
+            document.getElementById('th-state').textContent = texts.thState;
+            document.getElementById('th-ttft').textContent = texts.thTtft;
+            document.getElementById('th-avg-tbt').textContent = texts.thAvgTbt;
+            document.getElementById('th-p95-tbt').textContent = texts.thP95Tbt;
+            document.getElementById('th-throughput').textContent = texts.thThroughput;
+            document.getElementById('th-prefill').textContent = texts.thPrefill;
+            document.getElementById('th-cache-hit').textContent = texts.thCacheHit;
+            document.getElementById('th-decode').textContent = texts.thDecode;
+            document.getElementById('config-title').textContent = texts.configTitle;
+        }
+
+        // Language switcher
+        document.getElementById('lang-en').addEventListener('click', () => {
+            currentLang = 'en';
+            updateLanguage();
+        });
+
+        document.getElementById('lang-zh').addEventListener('click', () => {
+            currentLang = 'zh';
+            updateLanguage();
+        });
+
+        // Function to fetch status data
+        function fetchStatus() {
+            $('#loading').show();
+            $('#error').hide();
+            $('#requests-container').hide();
+            $('#license-status-container').hide();
+            $('#main-status-container').hide();
+            $('#engine-status-container').hide();
+
+            $.ajax({
+                url: '/status/status',
+                method: 'GET',
+                success: function(data) {
+                    updateStatusDisplay(data);
+                    $('#loading').hide();
+                    $('#requests-container').show();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching status:', error);
+                    $('#loading').hide();
+                    $('#error').show();
+                }
+            });
+        }
+
+        // Function to update the status display
+        function updateStatusDisplay(data) {
+            // Update serial number display
+            const serialNumberDisplay = document.getElementById('serial-number-display');
+            const heyiSnValue = document.getElementById('heyi-sn-value');
+            
+            if (data.heyi_sn && data.heyi_sn.trim() !== '') {
+                serialNumberDisplay.style.display = 'block';
+                heyiSnValue.textContent = data.heyi_sn;
+            } else {
+                serialNumberDisplay.style.display = 'none';
+            }
+
+            // Update license status
+            const licenseStatusContainer = document.getElementById('license-status-container');
+            const mainStatusContainer = document.getElementById('main-status-container');
+            const engineStatusContainer = document.getElementById('engine-status-container');
+            const licensingFormContainer = document.getElementById('licensing-form-container');
+            const generalLicenseInstruction = document.getElementById('general-license-instruction');
+            
+            if (data.licmgr_state === "LICENSED") {
+                licenseStatusContainer.style.display = 'none';
+                mainStatusContainer.style.display = 'block';
+                engineStatusContainer.style.display = 'block';
+                licensingFormContainer.style.display = 'none';
+                generalLicenseInstruction.style.display = 'none';
+                
+                // Start auto-refresh when licensed
+                startAutoRefresh();
+                
+                // Update engine status
+                const engineStatusBadge = document.getElementById('engine-status-badge');
+                const engineStatusText = i18n[currentLang][`engine${data.engine_state.charAt(0).toUpperCase() + data.engine_state.slice(1).toLowerCase()}`] || data.engine_state;
+                
+                // Set badge color based on engine state
+                engineStatusBadge.textContent = engineStatusText;
+                engineStatusBadge.className = 'badge ';
+                switch(data.engine_state) {
+                    case 'RUNNING':
+                        engineStatusBadge.classList.add('bg-success');
+                        break;
+                    case 'INIT':
+                    case 'BOOTING':
+                    case 'LPREFILLING':
+                        engineStatusBadge.classList.add('bg-warning');
+                        break;
+                    case 'ERROR':
+                        engineStatusBadge.classList.add('bg-danger');
+                        break;
+                    default:
+                        engineStatusBadge.classList.add('bg-secondary');
+                }
+
+                // Update config
+                if (data.config) {
+                    document.getElementById('config-data').textContent = JSON.stringify(data.config, null, 2);
+                }
+
+                // Update counters (only if available)
+                if (data.request_counters) {
+                    document.getElementById('pending-requests').textContent = data.request_counters.pending || 0;
+                    document.getElementById('prefilling-requests').textContent = data.request_counters.prefilling || 0;
+                    document.getElementById('decoding-requests').textContent = data.request_counters.decoding || 0;
+                }
+                
+                if (data.decode_throughput !== undefined) {
+                    document.getElementById('throughput').textContent = data.decode_throughput.toFixed(2);
+                }
+
+                // Update requests table
+                const requestsBody = document.getElementById('requests-body');
+                requestsBody.innerHTML = '';
+
+                if (data.requests) {
+                    data.requests.forEach(request => {
+                        const row = document.createElement('tr');
+                        
+                        const stateText = i18n[currentLang][`state${request.state.charAt(0).toUpperCase() + request.state.slice(1).toLowerCase()}`] || request.state;
+                        
+                        row.innerHTML = `
+                            <td><span class="status-badge status-${request.state.toLowerCase()}">${stateText}</span></td>
+                            <td>${request.ttft.toFixed(2)}</td>
+                            <td>${request.avg_tbt.toFixed(2)}</td>
+                            <td>${request.p95_tbt.toFixed(2)}</td>
+                            <td>${request.throughput.toFixed(2)}</td>
+                            <td>${request.prompt_tokens}</td>
+                            <td>${request.cache_hit_tokens || 0}</td>
+                            <td>${request.completion_tokens}</td>
+                        `;
+                        requestsBody.appendChild(row);
+                    });
+                }
+            } else {
+                // Not licensed - show license status message
+                licenseStatusContainer.style.display = 'block';
+                mainStatusContainer.style.display = 'none';
+                engineStatusContainer.style.display = 'none';
+                
+                const licenseStatusBadge = document.getElementById('license-status-badge');
+                const licenseStatusText = i18n[currentLang][`license${data.licmgr_state.charAt(0).toUpperCase() + data.licmgr_state.slice(1).toLowerCase()}`] || data.licmgr_state;
+                
+                licenseStatusBadge.textContent = licenseStatusText;
+                
+                // Set badge color based on license state
+                licenseStatusBadge.className = 'badge ';
+                switch(data.licmgr_state) {
+                    case 'LICENSING':
+                        licenseStatusBadge.classList.add('bg-warning');
+                        licensingFormContainer.style.display = 'block';
+                        generalLicenseInstruction.style.display = 'none';
+                        
+                        // Stop auto-refresh when licensing form is displayed
+                        stopAutoRefresh();
+                        break;
+                    case 'LICENSED':
+                        licenseStatusBadge.classList.add('bg-success');
+                        licensingFormContainer.style.display = 'none';
+                        generalLicenseInstruction.style.display = 'block';
+                        break;
+                    default:
+                        licenseStatusBadge.classList.add('bg-danger');
+                        licensingFormContainer.style.display = 'none';
+                        generalLicenseInstruction.style.display = 'block';
+                }
+                
+                // Display license error message if available
+                const errorContainer = document.getElementById('license-error-container');
+                const errorMessage = document.getElementById('license-error-message');
+                if (data.licmgr_error) {
+                    errorContainer.style.display = 'block';
+                    errorMessage.textContent = data.licmgr_error;
+                } else {
+                    errorContainer.style.display = 'none';
+                }
+            }
+        }
+
+        // License form submission handler
+        document.getElementById('licensing-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const snInput = document.getElementById('heyi-sn-input');
+            const submitBtn = document.getElementById('license-submit-btn');
+            const submitText = document.getElementById('license-submit-text');
+            const loadingSpinner = document.getElementById('license-loading');
+            const resultContainer = document.getElementById('licensing-result');
+            
+            // Frontend validation
+            if (!snInput.checkValidity()) {
+                snInput.classList.add('is-invalid');
+                return;
+            }
+            
+            snInput.classList.remove('is-invalid');
+            
+            // Show loading state
+            submitText.textContent = i18n[currentLang].licenseActivating;
+            loadingSpinner.style.display = 'inline-block';
+            submitBtn.disabled = true;
+            resultContainer.style.display = 'none';
+            
+            // Prepare request data
+            const requestData = {
+                heyi_sn: snInput.value.trim()
+            };
+            
+            // Send AJAX request
+            $.ajax({
+                url: '/lic/request',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(requestData),
+                success: function(response) {
+                    if (response && response.status === "file_download") {
+                        // Handle file download response
+                        window.location.href = response.download_url;
+                    } else {
+                        // Handle normal success response
+                        resultContainer.className = 'alert alert-success';
+                        resultContainer.textContent = i18n[currentLang].licenseSuccess;
+                        resultContainer.style.display = 'block';
+                    }
+                    // Refresh status after successful activation with delay
+                    setTimeout(() => {
+                        fetchStatus();
+                        // Restart auto-refresh after successful activation
+                        startAutoRefresh();
+                    }, 2000);
+                },
+                error: function(xhr, status, error) {
+                    resultContainer.className = 'alert alert-danger';
+                    resultContainer.textContent = i18n[currentLang].licenseError + ': ' +
+                        (xhr.responseText || error);
+                    resultContainer.style.display = 'block';
+                },
+                complete: function() {
+                    // Reset button state
+                    submitText.textContent = i18n[currentLang].licenseSubmitText;
+                    loadingSpinner.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            });
+        });
+
+        // Input validation on keyup
+        document.getElementById('heyi-sn-input').addEventListener('input', function(e) {
+            const input = e.target;
+            if (input.checkValidity()) {
+                input.classList.remove('is-invalid');
+            }
+        });
+
+        // Refresh button handler
+        document.getElementById('refresh-btn').addEventListener('click', fetchStatus);
+
+        // Auto-refresh control functions
+        function startAutoRefresh() {
+            if (!refreshInterval) {
+                refreshInterval = setInterval(fetchStatus, 5000);
+            }
+        }
+        
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+        
+        // Start auto-refresh initially
+        startAutoRefresh();
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLanguage();
+            fetchStatus();
+        });
+    </script>
+</body>
+</html>
