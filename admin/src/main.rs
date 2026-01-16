@@ -15,10 +15,12 @@ use sqlx::{sqlite::SqliteConnectOptions, sqlite::SqlitePoolOptions, SqlitePool};
 use std::net::SocketAddr;
 use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
+use reqwest::Client;
 
 #[derive(Clone)]
 struct AppState {
     pool: SqlitePool,
+    client: Client,
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -46,6 +48,12 @@ struct EnginePayload {
     weight: Option<i64>,
     priority: Option<i64>,
     enabled: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct EngineControlRequest {
+    action: String, // "start" or "stop"
+    model_path: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -127,7 +135,10 @@ async fn main() -> anyhow::Result<()> {
     ensure_admin_user(&pool).await?;
     ensure_gateway_settings(&pool).await?;
 
-    let state = AppState { pool };
+    let state = AppState { 
+        pool,
+        client: Client::new(),
+    };
 
     let public_routes = Router::new()
         .route("/health", get(health))
@@ -139,6 +150,7 @@ async fn main() -> anyhow::Result<()> {
             "/engines/:id",
             get(get_engine).put(update_engine).delete(delete_engine),
         )
+        .route("/engines/:id/control", post(control_engine))
         .route("/api-keys", get(list_api_keys).post(create_api_key))
         .route("/api-keys/:id", delete(delete_api_key))
         .route("/api-keys/:id/rotate", post(rotate_api_key))
@@ -398,20 +410,42 @@ async fn update_engine(
     Ok(Json(item))
 }
 
-async fn delete_engine(
+async fn control_engine(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Result<StatusCode, ApiError> {
-    let result = sqlx::query("DELETE FROM engines WHERE id = ?")
-        .bind(&id)
-        .execute(&state.pool)
-        .await?;
-
-    if result.rows_affected() == 0 {
-        return Err(ApiError::not_found("engine_not_found"));
+    Json(req): Json<EngineControlRequest>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    // For demo, assume gateway runs on localhost:8080
+    let gateway_url = "http://localhost:8080";
+    let endpoint = format!("{}/engine/{}", gateway_url, req.action);
+    let mut body = serde_json::json!({});
+    if let Some(path) = req.model_path {
+        body["model_path"] = serde_json::Value::String(path);
     }
 
-    Ok(StatusCode::NO_CONTENT)
+    let resp = state.client
+        .post(&endpoint)
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| ApiError {
+            status: StatusCode::BAD_GATEWAY,
+            message: format!("gateway request failed: {}", e),
+        })?;
+
+    if resp.status().is_success() {
+        let result: serde_json::Value = resp.json().await
+            .map_err(|e| ApiError {
+                status: StatusCode::BAD_GATEWAY,
+                message: format!("invalid response: {}", e),
+            })?;
+        Ok(Json(result))
+    } else {
+        Err(ApiError {
+            status: StatusCode::BAD_GATEWAY,
+            message: format!("gateway error: {}", resp.status()),
+        })
+    }
 }
 
 async fn list_api_keys(State(state): State<AppState>) -> Result<Json<Vec<ApiKey>>, ApiError> {

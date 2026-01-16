@@ -74,6 +74,42 @@ function App() {
   })
   const [apiKeyForm, setApiKeyForm] = useState({ name: '' })
   const [lastCreatedKey, setLastCreatedKey] = useState('')
+  const [modelPath, setModelPath] = useState('/DATA/Model')
+
+  const modelList = [
+    {
+      name: 'Qwen3-Coder-480B-A35B',
+      size: '480B',
+      updatedAt: '2024-01-15',
+    },
+    {
+      name: 'DeepSeek-V2',
+      size: '236B',
+      updatedAt: '2024-01-10',
+    },
+  ]
+
+  const appProfiles = [
+    {
+      key: 'admin',
+      name: '管理员控制台',
+      desc: '系统管理与监控',
+      access: '全部权限',
+      route: '/admin/*',
+      target: 'heyi',
+    },
+    {
+      key: 'chat',
+      name: '聊天应用',
+      desc: '用户对话接口',
+      access: 'chat/completions',
+      route: '/v1/*',
+      target: 'heyi/vllm',
+    },
+  ]
+
+  const formatNumber = (value) =>
+    typeof value === 'number' ? Number(value.toFixed(2)).toString() : value
 
   const statusStyles = useMemo(
     () => ({
@@ -295,6 +331,7 @@ function App() {
     { key: 'engines', label: '引擎管理' },
     { key: 'gateway', label: '网关管理' },
     { key: 'apps', label: '应用管理' },
+    { key: 'models', label: '模型管理' },
     { key: 'settings', label: '系统设置' },
   ]
 
@@ -435,7 +472,7 @@ function App() {
           </div>
         </aside>
 
-        <main className="flex-1 space-y-6 overflow-y-auto pr-2">
+        <main className="flex h-full flex-1 flex-col overflow-y-auto pr-2">
           <header className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
@@ -443,6 +480,7 @@ function App() {
                 {activeTab === 'engines' && '引擎与 GPU 管理'}
                 {activeTab === 'gateway' && '网关管理'}
                 {activeTab === 'apps' && '应用管理'}
+                {activeTab === 'models' && '模型管理'}
                 {activeTab === 'settings' && '系统设置'}
               </h1>
               <p className="mt-1 text-sm text-slate-700/80 dark:text-slate-200/80">
@@ -450,6 +488,7 @@ function App() {
                 {activeTab === 'engines' && '管理 heyi / vllm 运行参数。'}
                 {activeTab === 'gateway' && '分配 API 能力、调度策略与路由规则。'}
                 {activeTab === 'apps' && '管理应用接入、权限与路由策略。'}
+                {activeTab === 'models' && '管理本地模型目录与版本列表。'}
                 {activeTab === 'settings' && '控制台基础参数与策略。'}
               </p>
             </div>
@@ -461,83 +500,106 @@ function App() {
           </header>
 
           {activeTab === 'overview' && (
-            <div className="space-y-6">
-              <div className="space-y-6">
-                {engineStatusList.map((engine) => (
-                  <Card key={engine.key} className="border border-slate-300/60 bg-white/80 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/75 dark:ring-slate-800/80">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <div>
-                        <CardTitle className="text-lg text-slate-900 dark:text-white">{engine.name}</CardTitle>
-                        <p className="text-sm text-slate-700/80 dark:text-slate-200/80">实时请求追踪</p>
-                      </div>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" variant="secondary">
-                            配置信息
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>{engine.name} 配置</DialogTitle>
-                            <DialogDescription>当前引擎运行参数。</DialogDescription>
-                          </DialogHeader>
-                          <pre className="max-h-96 overflow-auto rounded-xl bg-slate-950/80 p-4 text-xs text-emerald-100">
-                            {JSON.stringify(engine.data.config || {}, null, 2)}
-                          </pre>
-                        </DialogContent>
-                      </Dialog>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid gap-4 md:grid-cols-4">
-                        {[
-                          { label: '等待请求', value: engine.data.pending, color: 'text-sky-500' },
-                          { label: '预填充请求', value: engine.data.prefilling, color: 'text-amber-500' },
-                          { label: '解码请求', value: engine.data.decoding, color: 'text-rose-500' },
-                          { label: '吞吐量 (tokens/s)', value: engine.data.throughput, color: 'text-emerald-500' },
-                        ].map((item) => (
-                          <div key={item.label} className="rounded-xl border border-slate-300/60 bg-white/70 p-4 dark:border-slate-700/60 dark:bg-slate-900/70">
-                            <p className={`text-2xl font-semibold ${item.color}`}>{item.value}</p>
-                            <p className="text-sm text-slate-700/80 dark:text-slate-200/80">{item.label}</p>
-                          </div>
-                        ))}
-                      </div>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="text-slate-900/80 dark:text-slate-100/90">状态</TableHead>
-                            <TableHead className="text-slate-900/80 dark:text-slate-100/90">首字延迟(ms)</TableHead>
-                            <TableHead className="text-slate-900/80 dark:text-slate-100/90">平均吐字延迟(ms)</TableHead>
-                            <TableHead className="text-slate-900/80 dark:text-slate-100/90">P95 吐字延迟(ms)</TableHead>
-                            <TableHead className="text-slate-900/80 dark:text-slate-100/90">吞吐量</TableHead>
-                            <TableHead className="text-slate-900/80 dark:text-slate-100/90">Prefill Tokens</TableHead>
-                            <TableHead className="text-slate-900/80 dark:text-slate-100/90">Cache Hit Tokens</TableHead>
-                            <TableHead className="text-slate-900/80 dark:text-slate-100/90">Decode Tokens</TableHead>
+            <div className="mt-3 flex flex-1 flex-col justify-between gap-5 min-h-0">
+              {engineStatusList.map((engine) => (
+                <Card key={engine.key} className="border border-slate-300/60 bg-white/80 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/75 dark:ring-slate-800/80">
+                  <CardHeader className="flex flex-row items-center justify-between py-3">
+                    <div>
+                      <CardTitle className="text-lg text-slate-900 dark:text-white">{engine.name}</CardTitle>
+                      <p className="text-sm text-slate-700/80 dark:text-slate-200/80">实时请求追踪</p>
+                    </div>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="secondary">
+                          配置信息
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>{engine.name} 配置</DialogTitle>
+                          <DialogDescription>当前引擎运行参数。</DialogDescription>
+                        </DialogHeader>
+                        <pre className="max-h-96 overflow-auto rounded-xl bg-slate-950/80 p-4 text-xs text-emerald-100">
+                          {JSON.stringify(engine.data.config || {}, null, 2)}
+                        </pre>
+                      </DialogContent>
+                    </Dialog>
+                  </CardHeader>
+                  <CardContent className="space-y-3 pt-2 pb-4">
+                    <div className="grid gap-3 md:grid-cols-4">
+                      {[
+                        { label: '等待请求', value: engine.data.pending, color: 'text-sky-500' },
+                        { label: '预填充请求', value: engine.data.prefilling, color: 'text-amber-500' },
+                        { label: '解码请求', value: engine.data.decoding, color: 'text-rose-500' },
+                        { label: '吞吐量 (tokens/s)', value: engine.data.throughput, color: 'text-emerald-500' },
+                      ].map((item) => (
+                        <div key={item.label} className="rounded-xl border border-slate-300/60 bg-white/70 p-3 dark:border-slate-700/60 dark:bg-slate-900/70">
+                          <p className={`text-2xl font-semibold ${item.color}`}>{formatNumber(item.value)}</p>
+                          <p className="text-sm text-slate-700/80 dark:text-slate-200/80">{item.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-slate-900/80 dark:text-slate-100/90">状态</TableHead>
+                          <TableHead className="text-slate-900/80 dark:text-slate-100/90">首字延迟(ms)</TableHead>
+                          <TableHead className="text-slate-900/80 dark:text-slate-100/90">平均吐字延迟(ms)</TableHead>
+                          <TableHead className="text-slate-900/80 dark:text-slate-100/90">P95 吐字延迟(ms)</TableHead>
+                          <TableHead className="text-slate-900/80 dark:text-slate-100/90">吞吐量</TableHead>
+                          <TableHead className="text-slate-900/80 dark:text-slate-100/90">Prefill Tokens</TableHead>
+                          <TableHead className="text-slate-900/80 dark:text-slate-100/90">Cache Hit Tokens</TableHead>
+                          <TableHead className="text-slate-900/80 dark:text-slate-100/90">Decode Tokens</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(engine.data.requests || []).map((req, index) => (
+                          <TableRow key={`${engine.key}-${req.state}-${index}`}>
+                            <TableCell>{req.state}</TableCell>
+                            <TableCell>{formatNumber(req.ttft)}</TableCell>
+                            <TableCell>{formatNumber(req.avgTbt)}</TableCell>
+                            <TableCell>{formatNumber(req.p95Tbt)}</TableCell>
+                            <TableCell>{formatNumber(req.throughput)}</TableCell>
+                            <TableCell>{req.promptTokens}</TableCell>
+                            <TableCell>{req.cacheHitTokens}</TableCell>
+                            <TableCell>{req.decodeTokens}</TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {(engine.data.requests || []).map((req, index) => (
-                            <TableRow key={`${engine.key}-${req.state}-${index}`}>
-                              <TableCell>{req.state}</TableCell>
-                              <TableCell>{req.ttft}</TableCell>
-                              <TableCell>{req.avgTbt}</TableCell>
-                              <TableCell>{req.p95Tbt}</TableCell>
-                              <TableCell>{req.throughput}</TableCell>
-                              <TableCell>{req.promptTokens}</TableCell>
-                              <TableCell>{req.cacheHitTokens}</TableCell>
-                              <TableCell>{req.decodeTokens}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              ))}
+              <Card className="border border-slate-300/60 bg-white/80 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/75 dark:ring-slate-800/80">
+                <CardHeader>
+                  <CardTitle className="text-lg text-slate-900 dark:text-white">运行汇总</CardTitle>
+                  <p className="text-sm text-slate-700/80 dark:text-slate-200/80">多引擎健康概览与资源占用。</p>
+                </CardHeader>
+                <CardContent className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-xl border border-slate-300/60 bg-white/70 p-3 dark:border-slate-700/60 dark:bg-slate-900/70">
+                    <p className="text-[11px] text-slate-700/80 dark:text-slate-200/80">在线引擎</p>
+                    <p className="mt-1 text-xl font-semibold text-emerald-500">2</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-300/60 bg-white/70 p-3 dark:border-slate-700/60 dark:bg-slate-900/70">
+                    <p className="text-[11px] text-slate-700/80 dark:text-slate-200/80">总吞吐量(tokens/s)</p>
+                    <p className="mt-1 text-xl font-semibold text-sky-500">
+                      {formatNumber(
+                        (engineStatusList[0]?.data.throughput || 0) +
+                        (engineStatusList[1]?.data.throughput || 0)
+                      )}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-300/60 bg-white/70 p-3 dark:border-slate-700/60 dark:bg-slate-900/70">
+                    <p className="text-[11px] text-slate-700/80 dark:text-slate-200/80">待处理请求</p>
+                    <p className="mt-1 text-xl font-semibold text-amber-500">{(engineStatusList[0]?.data.pending || 0) + (engineStatusList[1]?.data.pending || 0)}</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
           {activeTab === 'apps' && (
-            <Card className="border border-slate-300/60 bg-white/80 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/75 dark:ring-slate-800/80">
+            <Card className="mt-3 border border-slate-300/60 bg-white/80 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/75 dark:ring-slate-800/80">
               <CardHeader>
                 <CardTitle className="text-lg text-slate-900 dark:text-white">应用接入</CardTitle>
                 <p className="text-sm text-slate-700/80 dark:text-slate-200/80">为各应用分配访问权限与路由。</p>
@@ -574,8 +636,55 @@ function App() {
             </Card>
           )}
 
+          {activeTab === 'models' && (
+            <div className="mt-3 space-y-4">
+              <Card className="border border-slate-300/60 bg-white/80 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/75 dark:ring-slate-800/80">
+                <CardHeader>
+                  <CardTitle className="text-lg text-slate-900 dark:text-white">模型目录</CardTitle>
+                  <p className="text-sm text-slate-700/80 dark:text-slate-200/80">默认路径：/DATA/Model，可自定义。</p>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Input
+                    value={modelPath}
+                    onChange={(event) => setModelPath(event.target.value)}
+                    placeholder="请输入模型目录路径"
+                    className="bg-white/70 text-slate-900 border-slate-300/70 dark:bg-slate-900/70 dark:text-slate-100 dark:border-slate-700/60"
+                  />
+                  <Button variant="secondary">更新路径</Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-slate-300/60 bg-white/80 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/75 dark:ring-slate-800/80">
+                <CardHeader>
+                  <CardTitle className="text-lg text-slate-900 dark:text-white">模型列表</CardTitle>
+                  <p className="text-sm text-slate-700/80 dark:text-slate-200/80">当前目录下已识别模型。</p>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-slate-900/80 dark:text-slate-100/90">模型名称</TableHead>
+                        <TableHead className="text-slate-900/80 dark:text-slate-100/90">规模</TableHead>
+                        <TableHead className="text-slate-900/80 dark:text-slate-100/90">更新时间</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {modelList.map((model) => (
+                        <TableRow key={model.name}>
+                          <TableCell>{model.name}</TableCell>
+                          <TableCell>{model.size}</TableCell>
+                          <TableCell>{model.updatedAt}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {activeTab === 'gateway' && (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
               <Card className="border border-slate-300/60 bg-white/80 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/75 dark:ring-slate-800/80">
                 <CardHeader>
                   <CardTitle className="text-lg text-slate-900 dark:text-white">API 路由分配</CardTitle>
@@ -617,7 +726,7 @@ function App() {
           )}
 
           {activeTab === 'engines' && (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="mt-3 grid gap-4 md:grid-cols-2">
               {engineProfiles.map((engine) => (
                 <Card key={engine.key} className="border border-slate-300/60 bg-white/80 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/70 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/75 dark:ring-slate-800/80">
                   <CardHeader>
@@ -642,7 +751,7 @@ function App() {
           )}
 
           {activeTab === 'settings' && (
-            <Card className="border border-slate-300/60 bg-white/70 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/70">
+            <Card className="mt-3 border border-slate-300/60 bg-white/70 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/70">
               <CardHeader>
                 <CardTitle className="text-lg text-slate-900 dark:text-white">系统设置</CardTitle>
                 <p className="text-sm text-slate-700/80 dark:text-slate-200/80">当前策略与运行状态</p>
