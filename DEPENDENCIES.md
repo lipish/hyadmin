@@ -76,3 +76,17 @@ This will regenerate the `package-lock.json` file automatically.
 - **package-lock.json**: Can cause frequent merge conflicts and is automatically regenerated
 
 By excluding these ~10MB of files, we reduce the repository size significantly, making clones faster and reducing git object count.
+
+## Vendored Dependencies (Kept in Repository)
+
+The following large vendored dependencies are kept in the repository because they are actively used in the build:
+
+### llama.cpp (~1.5MB)
+- `engine/csrc/operators/moe/llama.cpp/` - GGML library for efficient neural network inference
+- Source: https://github.com/ggerganov/llama.cpp
+
+### llamafile (~200KB)
+- `engine/csrc/operators/moe/llamafile/` - Optimized matrix multiplication routines
+- Source: https://github.com/Mozilla-Ocho/llamafile
+
+These files are kept in the repository for now but could potentially be managed as git submodules in the future for easier updates.
