@@ -177,3 +177,17 @@ node_modules/
 *.tsbuildinfo
 !web/src/lib/
 !web/src/lib/**
+
+# Package lock files (can cause merge conflicts, regenerate with npm install)
+package-lock.json
+
+# Vendored dependencies - large auto-generated files
+# Perfetto amalgamated headers (auto-generated, can be downloaded from https://perfetto.dev/)
+engine/csrc/perfetto/perfetto.h
+engine/csrc/perfetto/perfetto.cc
+
+# Static assets - use CDN or package managers instead
+# Bootstrap and jQuery (available via CDN or npm)
+engine/heyi/server/static/css/bootstrap.min.css
+engine/heyi/server/static/js/bootstrap.bundle.min.js
+engine/heyi/server/static/js/jquery.min.js
