@@ -1,4 +1,4 @@
-// Moved from main.rs to allow reuse by backend.
+// Merged from gateway/src/lib.rs into backend module.
 
 use axum::{
     extract::State,

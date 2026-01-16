@@ -1,3 +1,6 @@
+mod admin;
+mod gateway;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let admin_addr = std::net::SocketAddr::from(([0, 0, 0, 0], 9001));
