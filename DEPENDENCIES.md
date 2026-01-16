@@ -34,7 +34,7 @@ Modify `engine/heyi/server/static/index.html` and `status.html` to use CDN links
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -52,7 +52,7 @@ mkdir -p css js
 wget -O css/bootstrap.min.css https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css
 
 # Download jQuery
-wget -O js/jquery.min.js https://code.jquery.com/jquery-3.7.1.min.js
+wget -O js/jquery.min.js https://code.jquery.com/jquery-3.6.0.min.js
 
 # Download Bootstrap JS
 wget -O js/bootstrap.bundle.min.js https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js
