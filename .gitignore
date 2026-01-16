@@ -114,6 +114,11 @@ target/*/
 # Rustfmt
 rustfmt.toml
 
+# macOS
+.DS_Store
+admin/target/
+gateway/target/
+
 # TypeScript
 node_modules/
 *.tsbuildinfo

@@ -3,6 +3,9 @@ name = "gateway"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+path = "src/lib.rs"
+
 [dependencies]
 pyo3 = { version = "0.22", features = ["auto-initialize"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
