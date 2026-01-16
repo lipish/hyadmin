@@ -1,1 +1,0 @@
-for<'a> Router<AppState>: tower_service::Service<&'a hyper::server::tcp::addr_stream::AddrStream>

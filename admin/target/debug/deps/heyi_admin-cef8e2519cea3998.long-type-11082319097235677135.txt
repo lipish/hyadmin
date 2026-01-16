@@ -1,1 +1,0 @@
-Router<AppState>: hyper::service::make::MakeServiceRef<hyper::server::tcp::addr_stream::AddrStream, axum::body::Body>

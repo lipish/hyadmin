@@ -1,0 +1,112 @@
+/**
+ * @Description  :
+ * @Author       : chenht2022
+ * @Date         : 2024-07-16 10:43:18
+ * @Version      : 1.0.0
+ * @LastEditors  : chenht2022
+ * @LastEditTime : 2024-08-07 09:47:43
+ * @Copyright (c) 2024 by KVCache.AI, All Rights Reserved.
+ **/
+#ifndef CPUINFER_CPUINFER_H
+#define CPUINFER_CPUINFER_H
+
+#include <atomic>
+#include <condition_variable>
+#include <functional>
+#include <mutex>
+#include <queue>
+#include <thread>
+#include <vector>
+
+#include "backend.h"
+#include "task_queue.h"
+#include <cuda_runtime.h>
+
+#include "operators/moe/llama.cpp/ggml-impl.h"
+
+namespace heyi {
+class CPUInfer {
+   public:
+    CPUInfer(int thread_num, int max_task_num) {
+        backend_ = new Backend(thread_num - 1);
+        task_queue_ = new TaskQueue(max_task_num);
+        for (int i = 0; i < (1 << 16); ++i) {
+            ggml_table_f32_f16[i] = GGML_COMPUTE_FP16_TO_FP32(i);
+        }
+    }
+
+    ~CPUInfer() {
+        delete backend_;
+        delete task_queue_;
+    }
+
+    void start_trace(std::string file) {
+        backend_->start_trace(file);
+    }
+    void end_trace() {
+        backend_->end_trace();
+    }
+
+    template <typename Func, typename Obj, typename... Args>
+    void enqueue(int task_id, Func f, Obj* obj, Args... args) {
+        task_queue_->enqueue(task_id, [=]() {
+            std::invoke(f, *obj, args..., backend_);
+        });
+    }
+
+    void submit(std::pair<intptr_t, intptr_t> params) {
+        void (*func)(void*) = (void (*)(void*))params.first;
+        void* args = (void*)params.second;
+        *((CPUInfer**)args) = this;
+        func(args);
+    }
+
+    void sync(int task_id) {
+        task_queue_->sync(task_id);
+    }
+
+    void cuda_launch_host_func(intptr_t user_cuda_stream, std::pair<intptr_t, intptr_t> params) {
+        void (*func)(void*) = (void (*)(void*))params.first;
+        void* args = (void*)params.second;
+        *((CPUInfer**)args) = this;
+        cudaLaunchHostFunc((cudaStream_t)user_cuda_stream, (cudaHostFn_t)func, args);
+    }
+
+    // static void sync_(void* cpu_infer_ptr) {
+    //     CPUInfer* cpuinfer = (CPUInfer*)cpu_infer_ptr;
+    //     cpuinfer->sync();
+    // }
+
+    // void sync_with_cuda_stream(intptr_t user_cuda_stream) {
+    //     cudaLaunchHostFunc((cudaStream_t)user_cuda_stream, (cudaHostFn_t)&sync_, (void*)this);
+    // }
+
+    static void lock_(void* cpu_infer_ptr) {
+        TRACE_EVENT_BEGIN("taskqueue", "lock");
+        CPUInfer* cpuinfer = (CPUInfer*)cpu_infer_ptr;
+        cpuinfer->mutex.lock();
+    }
+
+    static void unlock_(void* cpu_infer_ptr) {
+        TRACE_EVENT_END("taskqueue"); 
+        CPUInfer* cpuinfer = (CPUInfer*)cpu_infer_ptr;
+        cpuinfer->mutex.unlock();
+    }
+
+    void lock(intptr_t cuda_stream) {
+        cudaLaunchHostFunc((cudaStream_t)cuda_stream, (cudaHostFn_t)&lock_, (void*)this);
+    }
+
+    void unlock(intptr_t cuda_stream) {
+        cudaLaunchHostFunc((cudaStream_t)cuda_stream, (cudaHostFn_t)&unlock_, (void*)this);
+    }
+
+   public:
+    Backend* backend_;
+    TaskQueue* task_queue_;
+    std::mutex mutex;
+};
+
+} // namespace heyi
+
+#endif

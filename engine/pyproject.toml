@@ -1,0 +1,29 @@
+[build-system]
+requires = [
+    "scikit_build_core",
+    "pybind11",
+    "torch @ https://download.pytorch.org/whl/cu128/torch-2.7.0%2Bcu128-cp310-cp310-manylinux_2_28_x86_64.whl"
+]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+cmake.build-type = "Release"
+cmake.verbose = true
+cmake.define.CMAKE_VERBOSE_MAKEFILE = "ON"
+cmake.define.CMAKE_CXX_COMPILER_LAUNCHER = "ccache"
+cmake.define.CMAKE_C_COMPILER_LAUNCHER = "ccache"
+
+[project]
+name = "heyi"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+    "transformers",
+    "torch @ https://download.pytorch.org/whl/cu128/torch-2.7.0%2Bcu128-cp310-cp310-manylinux_2_28_x86_64.whl",
+    "uvicorn",
+    "colorlog",
+    "openai",
+    "fastapi",
+    "tiktoken",
+    "blobfile"
+]

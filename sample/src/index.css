@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 15%;
+
+    --primary: 268 78% 64%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 30%;
+
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 10% 15%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 142 71% 95%;
+
+    --warning: 37 100% 55%;
+    --warning-foreground: 37 100% 95%;
+
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 268 78% 64%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 240 5% 96%;
+    --sidebar-foreground: 240 4% 46%;
+    --sidebar-primary: 268 78% 64%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 92%;
+    --sidebar-accent-foreground: 240 10% 15%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: 268 78% 64%;
+
+    --chart-1: 268 78% 64%;
+    --chart-2: 240 50% 65%;
+    --chart-3: 280 50% 60%;
+    --chart-4: 220 50% 68%;
+    --chart-5: 300 40% 65%;
+
+    --sidebar: 240 5% 96%;
+
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    --spacing: 0.25rem;
+  }
+
+  .dark {
+    --background: 240 10% 4%;
+    --foreground: 0 0% 95%;
+
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 268 78% 64%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 0 0% 80%;
+
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 55%;
+
+    --accent: 240 5% 15%;
+    --accent-foreground: 0 0% 95%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 142 71% 95%;
+
+    --warning: 37 100% 55%;
+    --warning-foreground: 37 100% 95%;
+
+    --border: 240 5% 18%;
+    --input: 240 5% 18%;
+    --ring: 268 78% 64%;
+
+    --sidebar-background: 240 10% 6%;
+    --sidebar-foreground: 240 5% 55%;
+    --sidebar-primary: 268 78% 64%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 5% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 240 5% 18%;
+    --sidebar-ring: 268 78% 64%;
+
+    --chart-1: 268 78% 64%;
+    --chart-2: 240 45% 58%;
+    --chart-3: 280 45% 55%;
+    --chart-4: 220 45% 60%;
+    --chart-5: 300 35% 58%;
+
+    --sidebar: 240 10% 6%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  .page-transition {
+    animation: fadeIn 0.15s ease-in;
+  }
+}

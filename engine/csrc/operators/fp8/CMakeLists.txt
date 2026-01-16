@@ -1,0 +1,12 @@
+include_directories(${Python3_INCLUDE_DIRS})
+
+file(GLOB_RECURSE FP8_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.cuh
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.cu
+)
+
+add_library(fp8 STATIC ${FP8_SOURCES})

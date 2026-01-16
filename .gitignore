@@ -117,3 +117,5 @@ rustfmt.toml
 # TypeScript
 node_modules/
 *.tsbuildinfo
+!web/src/lib/
+!web/src/lib/**
