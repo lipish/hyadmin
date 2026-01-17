@@ -23,40 +23,11 @@ Alternatively, you can download from the official Perfetto releases:
 
 ## Static Web Assets (Bootstrap & jQuery)
 
-The static web assets for the server UI are excluded from git. You have two options:
+The static web assets for the admin UI are now served from the admin backend. The HTML files already use CDN links for Bootstrap and jQuery, so no additional downloads are needed.
 
-### Option 1: Use CDN (Recommended)
-
-Modify `engine/heyi/server/static/index.html` and `status.html` to use CDN links:
-
-```html
-<!-- Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-```
-
-### Option 2: Download Locally
-
-```bash
-cd engine/heyi/server/static/
-
-# Create directories
-mkdir -p css js
-
-# Download Bootstrap CSS
-wget -O css/bootstrap.min.css https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css
-
-# Download jQuery
-wget -O js/jquery.min.js https://code.jquery.com/jquery-3.6.0.min.js
-
-# Download Bootstrap JS
-wget -O js/bootstrap.bundle.min.js https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js
-```
+The status monitoring UI is now available at:
+- `http://localhost:9001/static/status.html` (when admin backend is running)
+- `http://localhost:9001/static/index.html` (redirects to status.html)
 
 ## Web Frontend (package-lock.json)
 

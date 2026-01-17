@@ -29,7 +29,7 @@ from heyi.optimized_models.layerwise_prefill_models import (
 from heyi.optimized_models.opt_modeling_deepseek_v3 import OptDeepseekV3ForCausalLM
 from heyi.optimized_models.opt_modeling_qwen3_moe import OptQwen3MoeForCausalLM
 from heyi.runner import MLADecodeRunner, GQADecodeRunner, MLA_LPrefillRunner, GQA_LPrefillRunner
-from heyi.server.config import Config
+from heyi.config import Config
 from heyi.io_interface import IOInterface
 from heyi.utils.fork_model import fork_model
 from heyi.utils.kvcache.kvcache import PagedMLACache, PagedGQACache, n_pages
