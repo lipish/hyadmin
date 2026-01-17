@@ -6,7 +6,7 @@ import torch
 from transformers.cache_utils import Cache
 from transformers.configuration_utils import PretrainedConfig
 
-from heyi.server.config import Config
+from heyi.config import Config
 from heyi.utils.kvcache.pagetable import PageTable, MLAPageTable, GQAPageTable
 from heyi.utils.kvcache.prefixtree import Match, PrefixTree
 

@@ -8,6 +8,7 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
+use tower_http::services::ServeDir;
 use chrono::{DateTime, Utc};
 use rand::{distributions::Alphanumeric, Rng};
 use reqwest::Client;
@@ -160,6 +161,7 @@ pub async fn serve(addr: SocketAddr) -> anyhow::Result<()> {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .nest_service("/static", ServeDir::new("backend/static"))
         .layer(CorsLayer::new().allow_origin(Any).allow_headers(Any))
         .with_state(state);
 

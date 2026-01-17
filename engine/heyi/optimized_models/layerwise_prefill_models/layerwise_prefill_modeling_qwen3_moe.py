@@ -35,7 +35,7 @@ from .common import LP_LinearFP8_FromGPU, LP_LinearTorch_FromGPU, LP_MLP_FromCPU
 from heyi.utils.ring_buffer import RingBufferMgr
 
 from heyi.utils.kvcache.kvcache import PagedGQACache
-from heyi.server.config import Config
+from heyi.config import Config
 from heyi.utils.log import logger
 import flashinfer
 

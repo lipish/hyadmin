@@ -12,7 +12,7 @@ from flashinfer.logits_processor import (
 )
 from transformers import AutoTokenizer, PretrainedConfig
 
-from heyi.server.config import Config
+from heyi.config import Config
 from heyi.utils.log import logger
 
 

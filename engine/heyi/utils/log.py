@@ -19,7 +19,7 @@ from logging.handlers import BaseRotatingHandler
 import time
 import colorlog
 
-from heyi.server.config import Config
+from heyi.config import Config
 
 
 class DailyRotatingFileHandler(BaseRotatingHandler):

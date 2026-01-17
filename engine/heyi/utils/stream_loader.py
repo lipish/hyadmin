@@ -4,7 +4,7 @@ from collections import deque
 from typing import Deque, Iterable, List, NamedTuple, Protocol, runtime_checkable
 
 import torch
-from heyi.server.config import Config
+from heyi.config import Config
 # from line_profiler import profile as lprofile
 
 

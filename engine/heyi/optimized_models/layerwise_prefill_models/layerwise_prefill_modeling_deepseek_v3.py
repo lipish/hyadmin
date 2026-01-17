@@ -18,7 +18,7 @@ from heyi.operators import MLA
 from heyi.operators import FusedRMSNorm as OptDeepseekV3RMSNorm
 from heyi.operators import KDeepseekV2Model, YarnRotaryEmbeddingV3
 from heyi.operators.mla import apply_rotary_pos_emb
-from heyi.server.config import Config
+from heyi.config import Config
 from heyi.utils.kvcache.kvcache import PagedMLACache
 from heyi.utils.log import logger
 from heyi.utils.ring_buffer import RingBufferMgr

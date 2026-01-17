@@ -6,7 +6,7 @@ import torch
 from transformers import GenerationConfig
 from flashinfer.logits_processor import LogitsPipe
 
-from heyi.server.config import Config
+from heyi.config import Config
 from heyi.utils.stats import ReqStats
 from heyi.utils.kvcache.kvcache import Match
 from heyi.utils.usage import Usage

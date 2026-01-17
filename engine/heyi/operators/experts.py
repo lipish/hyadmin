@@ -13,7 +13,7 @@ from heyi.models.deepseek_v3 import DeepseekV3MoE
 from heyi.models.qwen3_moe import Qwen3MoeSparseMoeBlock
 from heyi.operators.base import CustomLoadModule
 from heyi.operators.cpuinfer import CPUInfer
-from heyi.server.config import Config
+from heyi.config import Config
 from heyi.utils import main_model_registry
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "heyi_ext", "build"))
